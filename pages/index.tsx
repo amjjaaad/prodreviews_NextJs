@@ -41,7 +41,8 @@ interface AudioRecorderState {
 // Icons components using React Icons
 const StarIcon = ({ filled = false }: { filled?: boolean }) => (
   <FiStar 
-    className={`w-4 h-4 ${filled ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+    className={`w-4 h-4 ${filled ? 'text-yellow-400' : 'text-gray-300'}`}
+    fill={filled ? 'currentColor' : 'none'}
   />
 );
 
@@ -143,7 +144,7 @@ export default function ProductReviewsApp() {
     category: '',
     rating: 0,
     content: '',
-    author: 'Anonymous User'
+    author: ''
   });
   const [recordedAudio, setRecordedAudio] = useState<string | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -272,7 +273,7 @@ export default function ProductReviewsApp() {
       category: '',
       rating: 0,
       content: '',
-      author: 'Anonymous User'
+      author: ''
     });
     setRecordedAudio(null);
     setCapturedImage(null);
@@ -314,7 +315,7 @@ export default function ProductReviewsApp() {
   const canProceedToNext = () => {
     switch (currentStep) {
       case WizardStep.PRODUCT_INFO:
-        return newReview.productName && newReview.category;
+        return newReview.author.trim() && newReview.productName.trim() && newReview.category;
       case WizardStep.RATING:
         return newReview.rating > 0;
       case WizardStep.TEXT_REVIEW:
@@ -347,7 +348,7 @@ export default function ProductReviewsApp() {
       category: '',
       rating: 0,
       content: '',
-      author: 'Anonymous User'
+      author: ''
     });
     setRecordedAudio(null);
     setCapturedImage(null);
@@ -362,10 +363,20 @@ export default function ProductReviewsApp() {
         return (
           <div className="space-y-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name *</label>
+              <input
+                type="text"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
+                value={newReview.author}
+                onChange={(e) => setNewReview(prev => ({ ...prev, author: e.target.value }))}
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Product Name *</label>
               <input
                 type="text"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
                 value={newReview.productName}
                 onChange={(e) => setNewReview(prev => ({ ...prev, productName: e.target.value }))}
                 placeholder="Enter product name"
@@ -374,7 +385,7 @@ export default function ProductReviewsApp() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
               <select
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
                 value={newReview.category}
                 onChange={(e) => setNewReview(prev => ({ ...prev, category: e.target.value }))}
               >
@@ -424,7 +435,7 @@ export default function ProductReviewsApp() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Tell us about your experience *</label>
               <textarea
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500 resize-vertical min-h-[120px]"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500 resize-vertical min-h-[120px]"
                 value={newReview.content}
                 onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
                 placeholder="Share details about your experience with this product. What did you like? What could be improved?"
@@ -449,10 +460,10 @@ export default function ProductReviewsApp() {
                 <div className="relative inline-block">
                   <img src={capturedImage} alt="Preview" className="w-32 h-32 object-cover rounded-lg mx-auto" />
                   <button
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm"
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center"
                     onClick={() => setCapturedImage(null)}
                   >
-                    ×
+                    <FiX className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-sm text-green-600">Photo added successfully!</p>
@@ -506,10 +517,10 @@ export default function ProductReviewsApp() {
                     <AudioWaveform isPlaying={currentlyPlaying === recordedAudio} />
                   </div>
                   <button
-                    className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm ml-auto"
+                    className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center ml-auto"
                     onClick={() => setRecordedAudio(null)}
                   >
-                    ×
+                    <FiX className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-sm text-green-600">Audio recorded successfully!</p>
@@ -542,6 +553,11 @@ export default function ProductReviewsApp() {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Review your submission</h3>
             
             <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div>
+                <div className="text-sm font-medium text-gray-700">Reviewer</div>
+                <div className="text-sm text-gray-900">{newReview.author}</div>
+              </div>
+              
               <div>
                 <div className="text-sm font-medium text-gray-700">Product</div>
                 <div className="text-sm text-gray-900">{newReview.productName}</div>
@@ -603,9 +619,12 @@ export default function ProductReviewsApp() {
         <meta name="description" content="Mobile-first product reviews app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="max-w-md mx-auto p-4 min-h-screen bg-gray-50">
+      <div className="max-w-md mx-auto p-4 min-h-screen bg-gray-50 font-sans" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Product Reviews</h1>
@@ -614,11 +633,11 @@ export default function ProductReviewsApp() {
 
         {/* Search */}
         <div className="relative mb-4">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Search products or reviews..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
+            className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -629,7 +648,7 @@ export default function ProductReviewsApp() {
           {categories.map(category => (
             <button
               key={category}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-colors min-h-[44px] ${
                 selectedCategory === category 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -642,14 +661,15 @@ export default function ProductReviewsApp() {
           {[1, 2, 3, 4, 5].map(rating => (
             <button
               key={rating}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              className={`flex items-center gap-1 px-4 py-2.5 rounded-full text-sm font-medium transition-colors min-h-[44px] ${
                 selectedRating === rating 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
               onClick={() => setSelectedRating(selectedRating === rating ? null : rating)}
             >
-              {rating}★
+              {rating}
+              <FiStar className="w-3 h-3" fill="currentColor" />
             </button>
           ))}
         </div>
@@ -757,7 +777,7 @@ export default function ProductReviewsApp() {
               <div className="flex justify-between items-center">
                 <div className="flex gap-3">
                   <button
-                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg transition-colors min-h-[44px] ${
                       review.userVote === 'helpful' 
                         ? 'text-blue-600 bg-blue-50' 
                         : 'text-slate-600 hover:bg-slate-50'
@@ -771,7 +791,7 @@ export default function ProductReviewsApp() {
                     {review.helpfulVotes}
                   </button>
                   <button
-                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                    className={`flex items-center gap-2 text-sm px-3 py-2 rounded-lg transition-colors min-h-[44px] ${
                       review.userVote === 'unhelpful' 
                         ? 'text-blue-600 bg-blue-50' 
                         : 'text-slate-600 hover:bg-slate-50'
@@ -795,10 +815,10 @@ export default function ProductReviewsApp() {
 
         {/* FAB */}
         <button 
-          className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 hover:scale-110 transition-all flex items-center justify-center z-50"
+          className="fixed bottom-6 right-6 w-16 h-16 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 hover:scale-110 transition-all flex items-center justify-center z-50"
           onClick={() => setShowCreateModal(true)}
         >
-          <FiPlus className="w-6 h-6" />
+          <FiPlus className="w-7 h-7" />
         </button>
 
         {/* Create Review Wizard Modal */}
@@ -836,7 +856,7 @@ export default function ProductReviewsApp() {
               <div className="flex gap-2">
                 {currentStep > WizardStep.PRODUCT_INFO && (
                   <button
-                    className="flex items-center gap-2 px-4 py-3 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
+                    className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 rounded-lg text-base font-medium hover:bg-slate-200 transition-colors"
                     onClick={prevStep}
                   >
                     <FiArrowLeft className="w-4 h-4" />
@@ -848,7 +868,7 @@ export default function ProductReviewsApp() {
                 
                 {currentStep < WizardStep.REVIEW ? (
                   <button
-                    className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-2 px-6 py-4 rounded-lg text-base font-medium transition-colors ${
                       canProceedToNext()
                         ? 'bg-blue-500 text-white hover:bg-blue-600'
                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
@@ -856,12 +876,20 @@ export default function ProductReviewsApp() {
                     onClick={nextStep}
                     disabled={!canProceedToNext()}
                   >
-                    {currentStep === WizardStep.IMAGE || currentStep === WizardStep.AUDIO ? 'Skip' : 'Next'}
+                    {(() => {
+                      if (currentStep === WizardStep.IMAGE) {
+                        return capturedImage ? 'Next' : 'Skip';
+                      }
+                      if (currentStep === WizardStep.AUDIO) {
+                        return recordedAudio ? 'Next' : 'Skip';
+                      }
+                      return 'Next';
+                    })()}
                     <FiArrowRight className="w-4 h-4" />
                   </button>
                 ) : (
                   <button
-                    className="flex items-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                    className="flex items-center gap-2 px-6 py-4 bg-green-500 text-white rounded-lg text-base font-medium hover:bg-green-600 transition-colors"
                     onClick={handleSubmitReview}
                   >
                     <FiCheck className="w-4 h-4" />
