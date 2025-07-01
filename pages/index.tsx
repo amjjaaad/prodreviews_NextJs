@@ -317,12 +317,28 @@ export default function ProductReviewsApp() {
                   </div>
                   <div className="text-xs text-slate-500">by {review.author}</div>
                 </div>
-              </div>
-
-              <div className="flex gap-0.5 mb-2">
-                {[1, 2, 3, 4, 5].map(star => (
-                  <StarIcon key={star} filled={star <= review.rating} />
-                ))}
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <StarIcon key={star} filled={star <= review.rating} />
+                    ))}
+                  </div>
+                  {/* Media thumbnails */}
+                  <div className="flex gap-1">
+                    {review.imageUrl && (
+                      <img
+                        src={review.imageUrl}
+                        alt="Product thumbnail"
+                        className="w-10 h-10 rounded object-cover"
+                      />
+                    )}
+                    {review.audioUrl && (
+                      <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
+                        <FiPlay className="w-4 h-4 text-blue-600" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="text-gray-700 text-sm leading-relaxed mb-3">
