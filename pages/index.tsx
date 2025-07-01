@@ -41,6 +41,28 @@ const StarIcon = ({ filled = false }: { filled?: boolean }) => (
   />
 );
 
+// Audio Waveform Component
+const AudioWaveform = ({ isPlaying }: { isPlaying: boolean }) => (
+  <div className="flex items-center gap-0.5">
+    {[...Array(5)].map((_, i) => (
+      <div
+        key={i}
+        className={`w-0.5 bg-blue-500 rounded-full transition-all duration-300 ${
+          isPlaying 
+            ? 'animate-pulse' 
+            : ''
+        }`}
+        style={{
+          height: isPlaying 
+            ? `${8 + Math.sin((Date.now() / 200) + i) * 4}px`
+            : '8px',
+          animationDelay: `${i * 100}ms`
+        }}
+      />
+    ))}
+  </div>
+);
+
 // Sample data
 const initialReviews: Review[] = [
   {
@@ -106,6 +128,8 @@ export default function ProductReviewsApp() {
     mediaRecorder: null,
     audioChunks: []
   });
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -238,10 +262,33 @@ export default function ProductReviewsApp() {
 
   const playAudio = (audioUrl: string) => {
     if (audioRef.current) {
-      audioRef.current.src = audioUrl;
-      audioRef.current.play();
+      if (currentlyPlaying === audioUrl) {
+        audioRef.current.pause();
+        setCurrentlyPlaying(null);
+      } else {
+        audioRef.current.src = audioUrl;
+        audioRef.current.play();
+        setCurrentlyPlaying(audioUrl);
+      }
     }
   };
+
+  // Audio event handlers
+  useEffect(() => {
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      const handleEnded = () => setCurrentlyPlaying(null);
+      const handlePause = () => setCurrentlyPlaying(null);
+      
+      audioElement.addEventListener('ended', handleEnded);
+      audioElement.addEventListener('pause', handlePause);
+      
+      return () => {
+        audioElement.removeEventListener('ended', handleEnded);
+        audioElement.removeEventListener('pause', handlePause);
+      };
+    }
+  }, []);
 
   return (
     <>
@@ -329,12 +376,26 @@ export default function ProductReviewsApp() {
                       <img
                         src={review.imageUrl}
                         alt="Product thumbnail"
-                        className="w-10 h-10 rounded object-cover"
+                        className="w-10 h-10 rounded object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxImage(review.imageUrl!);
+                        }}
                       />
                     )}
                     {review.audioUrl && (
-                      <div className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
-                        <FiPlay className="w-4 h-4 text-blue-600" />
+                      <div 
+                        className="w-10 h-10 bg-blue-100 rounded flex items-center justify-center cursor-pointer hover:bg-blue-200 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playAudio(review.audioUrl!);
+                        }}
+                      >
+                        {currentlyPlaying === review.audioUrl ? (
+                          <AudioWaveform isPlaying={true} />
+                        ) : (
+                          <FiPlay className="w-4 h-4 text-blue-600" />
+                        )}
                       </div>
                     )}
                   </div>
@@ -354,21 +415,32 @@ export default function ProductReviewsApp() {
                         <img
                           src={review.imageUrl}
                           alt="Product"
-                          className="w-15 h-15 rounded-lg object-cover cursor-pointer"
+                          className="w-20 h-20 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLightboxImage(review.imageUrl!);
+                          }}
                         />
                       )}
                       {review.audioUrl && (
-                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg min-w-0 flex-1">
                           <button
-                            className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                            className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors flex-shrink-0"
                             onClick={(e) => {
                               e.stopPropagation();
                               playAudio(review.audioUrl!);
                             }}
                           >
-                            <FiPlay className="w-4 h-4 ml-0.5" />
+                            {currentlyPlaying === review.audioUrl ? (
+                              <div className="w-3 h-3 bg-white rounded-sm"></div>
+                            ) : (
+                              <FiPlay className="w-4 h-4 ml-0.5" />
+                            )}
                           </button>
-                          <div className="text-xs text-slate-600">Audio Review</div>
+                          <div className="flex flex-col gap-1 min-w-0">
+                            <div className="text-xs text-slate-600">Audio Review</div>
+                            <AudioWaveform isPlaying={currentlyPlaying === review.audioUrl} />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -577,6 +649,29 @@ export default function ProductReviewsApp() {
                   Submit Review
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Image Lightbox */}
+        {lightboxImage && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4"
+            onClick={() => setLightboxImage(null)}
+          >
+            <div className="relative max-w-full max-h-full">
+              <button 
+                className="absolute top-4 right-4 w-10 h-10 bg-white bg-opacity-20 text-white rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors z-10"
+                onClick={() => setLightboxImage(null)}
+              >
+                <FiX className="w-6 h-6" />
+              </button>
+              <img
+                src={lightboxImage}
+                alt="Full size product image"
+                className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
             </div>
           </div>
         )}
