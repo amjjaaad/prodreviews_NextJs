@@ -1,6 +1,16 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
+import { 
+  FiSearch, 
+  FiMic, 
+  FiCamera, 
+  FiPlay, 
+  FiThumbsUp, 
+  FiThumbsDown, 
+  FiPlus, 
+  FiX,
+  FiStar
+} from 'react-icons/fi';
 
 // Types
 interface Review {
@@ -24,583 +34,11 @@ interface AudioRecorderState {
   audioChunks: Blob[];
 }
 
-// Global styles as a string
-const globalStyles = `
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-  
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-    background-color: #f8fafc;
-    color: #1e293b;
-  }
-  
-  .container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 16px;
-    min-height: 100vh;
-  }
-  
-  .header {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-  
-  .title {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1e293b;
-    margin-bottom: 8px;
-  }
-  
-  .subtitle {
-    color: #64748b;
-    font-size: 14px;
-  }
-  
-  .search-container {
-    position: relative;
-    margin-bottom: 16px;
-  }
-  
-  .search-input {
-    width: 100%;
-    padding: 12px 12px 12px 40px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 16px;
-    background-color: white;
-  }
-  
-  .search-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-  
-  .search-icon {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-  }
-  
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .filter-chip {
-    padding: 6px 12px;
-    background-color: #f1f5f9;
-    border: none;
-    border-radius: 20px;
-    font-size: 12px;
-    color: #475569;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .filter-chip:hover {
-    background-color: #e2e8f0;
-  }
-  
-  .filter-chip.active {
-    background-color: #3b82f6;
-    color: white;
-  }
-  
-  .reviews-list {
-    margin-bottom: 80px;
-  }
-  
-  .review-card {
-    background: white;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  
-  .review-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 8px;
-  }
-  
-  .review-info {
-    flex: 1;
-  }
-  
-  .product-name {
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 4px;
-  }
-  
-  .category-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    background-color: #f1f5f9;
-    color: #64748b;
-    font-size: 12px;
-    border-radius: 12px;
-    margin-bottom: 4px;
-  }
-  
-  .author {
-    font-size: 12px;
-    color: #64748b;
-  }
-  
-  .rating {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 8px;
-  }
-  
-  .star {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .star.filled {
-    color: #fbbf24;
-  }
-  
-  .star.empty {
-    color: #d1d5db;
-  }
-  
-  .review-content {
-    color: #374151;
-    font-size: 14px;
-    line-height: 1.4;
-    margin-bottom: 12px;
-  }
-  
-  .review-media {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  
-  .media-thumbnail {
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    object-fit: cover;
-    cursor: pointer;
-  }
-  
-  .audio-player {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px;
-    background-color: #f8fafc;
-    border-radius: 8px;
-  }
-  
-  .play-button {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: none;
-    background-color: #3b82f6;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .audio-info {
-    font-size: 12px;
-    color: #64748b;
-  }
-  
-  .review-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .vote-buttons {
-    display: flex;
-    gap: 12px;
-  }
-  
-  .vote-button {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: none;
-    color: #64748b;
-    font-size: 12px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-  
-  .vote-button:hover {
-    background-color: #f1f5f9;
-  }
-  
-  .vote-button.voted {
-    color: #3b82f6;
-    background-color: #eff6ff;
-  }
-  
-  .review-date {
-    font-size: 12px;
-    color: #9ca3af;
-  }
-  
-  .fab {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    transition: all 0.2s;
-  }
-  
-  .fab:hover {
-    background-color: #2563eb;
-    transform: scale(1.1);
-  }
-  
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    padding: 16px;
-  }
-  
-  .modal {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    width: 100%;
-    max-width: 400px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-  
-  .modal-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-  }
-  
-  .close-button {
-    background: none;
-    border: none;
-    color: #64748b;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-  }
-  
-  .close-button:hover {
-    background-color: #f1f5f9;
-  }
-  
-  .form-group {
-    margin-bottom: 16px;
-  }
-  
-  .form-label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 6px;
-  }
-  
-  .form-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 14px;
-    background-color: white;
-  }
-  
-  .form-input:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-  
-  .form-select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 14px;
-    background-color: white;
-    cursor: pointer;
-  }
-  
-  .form-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 14px;
-    background-color: white;
-    resize: vertical;
-    min-height: 80px;
-  }
-  
-  .rating-selector {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 16px;
-  }
-  
-  .rating-star {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .rating-star:hover {
-    transform: scale(1.1);
-  }
-  
-  .media-upload {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .media-button {
-    flex: 1;
-    padding: 12px;
-    border: 2px dashed #e2e8f0;
-    border-radius: 8px;
-    background: none;
-    color: #64748b;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-  }
-  
-  .media-button:hover {
-    border-color: #3b82f6;
-    color: #3b82f6;
-  }
-  
-  .media-button.recording {
-    border-color: #ef4444;
-    color: #ef4444;
-    background-color: #fef2f2;
-  }
-  
-  .media-text {
-    font-size: 12px;
-    text-align: center;
-  }
-  
-  .button-group {
-    display: flex;
-    gap: 8px;
-    margin-top: 20px;
-  }
-  
-  .button {
-    flex: 1;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .button-primary {
-    background-color: #3b82f6;
-    color: white;
-  }
-  
-  .button-primary:hover {
-    background-color: #2563eb;
-  }
-  
-  .button-secondary {
-    background-color: #f1f5f9;
-    color: #64748b;
-  }
-  
-  .button-secondary:hover {
-    background-color: #e2e8f0;
-  }
-  
-  .hidden-input {
-    display: none;
-  }
-  
-  .media-preview {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-  }
-  
-  .preview-item {
-    position: relative;
-  }
-  
-  .preview-image {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-  
-  .remove-media {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 20px;
-    height: 20px;
-    background-color: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    body {
-      background-color: #0f172a;
-      color: #f1f5f9;
-    }
-    
-    .review-card {
-      background-color: #1e293b;
-    }
-    
-    .modal {
-      background-color: #1e293b;
-    }
-    
-    .form-input, .form-select, .form-textarea {
-      background-color: #334155;
-      border-color: #475569;
-      color: #f1f5f9;
-    }
-  }
-`;
-
-// Icons (React Icons replacement)
+// Icons components using React Icons
 const StarIcon = ({ filled = false }: { filled?: boolean }) => (
-  <svg className={`star ${filled ? 'filled' : 'empty'}`} fill="currentColor" viewBox="0 0 20 20">
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg className="search-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
-
-const MicIcon = ({ isRecording = false }: { isRecording?: boolean }) => (
-  <svg width="24" height="24" fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-  </svg>
-);
-
-const CameraIcon = () => (
-  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-  </svg>
-);
-
-const PlayIcon = () => (
-  <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-  </svg>
-);
-
-const ThumbsUpIcon = () => (
-  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-  </svg>
-);
-
-const ThumbsDownIcon = () => (
-  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14H5.236a2 2 0 01-1.789-2.894l3.5-7A2 2 0 018.736 3h4.018c.163 0 .326.02.485.06L17 4m-7 10v5a2 2 0 002 2h.095c.5 0 .905-.405.905-.905 0-.714.211-1.412.608-2.006L17 13V4m-7 10h2m5-10h2a2 2 0 012 2v6a2 2 0 01-2 2h-2.5" />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-  </svg>
+  <FiStar 
+    className={`w-4 h-4 ${filled ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+  />
 );
 
 // Sample data
@@ -652,7 +90,7 @@ export default function ProductReviewsApp() {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
-  
+
   // Form states
   const [newReview, setNewReview] = useState({
     productName: '',
@@ -678,7 +116,7 @@ export default function ProductReviewsApp() {
                          review.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || review.category === selectedCategory;
     const matchesRating = selectedRating === null || review.rating === selectedRating;
-    
+
     return matchesSearch && matchesCategory && matchesRating;
   });
 
@@ -740,14 +178,14 @@ export default function ProductReviewsApp() {
     setReviews(prev => prev.map(review => {
       if (review.id === reviewId) {
         const newReview = { ...review };
-        
+
         // Remove previous vote if exists
         if (review.userVote === 'helpful') {
           newReview.helpfulVotes--;
         } else if (review.userVote === 'unhelpful') {
           newReview.unhelpfulVotes--;
         }
-        
+
         // Add new vote if different from previous
         if (review.userVote !== voteType) {
           if (voteType === 'helpful') {
@@ -759,7 +197,7 @@ export default function ProductReviewsApp() {
         } else {
           newReview.userVote = undefined;
         }
-        
+
         return newReview;
       }
       return review;
@@ -784,7 +222,7 @@ export default function ProductReviewsApp() {
     };
 
     setReviews(prev => [review, ...prev]);
-    
+
     // Reset form
     setNewReview({
       productName: '',
@@ -812,34 +250,37 @@ export default function ProductReviewsApp() {
         <meta name="description" content="Mobile-first product reviews app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-        <style dangerouslySetInnerHTML={{ __html: globalStyles }} />
       </Head>
 
-      <div className="container">
+      <div className="max-w-md mx-auto p-4 min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="header">
-          <h1 className="title">Product Reviews</h1>
-          <p className="subtitle">Share your honest product experiences</p>
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-slate-800 mb-2">Product Reviews</h1>
+          <p className="text-slate-500 text-sm">Share your honest product experiences</p>
         </div>
 
         {/* Search */}
-        <div className="search-container">
-          <SearchIcon />
+        <div className="relative mb-4">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
             placeholder="Search products or reviews..."
-            className="search-input"
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-base bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         {/* Filter Chips */}
-        <div className="filters">
+        <div className="flex flex-wrap gap-2 mb-4">
           {categories.map(category => (
             <button
               key={category}
-              className={`filter-chip ${selectedCategory === category ? 'active' : ''}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedCategory === category 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
               onClick={() => setSelectedCategory(category)}
             >
               {category}
@@ -848,7 +289,11 @@ export default function ProductReviewsApp() {
           {[1, 2, 3, 4, 5].map(rating => (
             <button
               key={rating}
-              className={`filter-chip ${selectedRating === rating ? 'active' : ''}`}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedRating === rating 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
               onClick={() => setSelectedRating(selectedRating === rating ? null : rating)}
             >
               {rating}★
@@ -857,28 +302,30 @@ export default function ProductReviewsApp() {
         </div>
 
         {/* Reviews List */}
-        <div className="reviews-list">
+        <div className="mb-20">
           {filteredReviews.map(review => (
             <div
               key={review.id}
-              className="review-card"
+              className="bg-white rounded-xl p-4 mb-4 shadow-sm cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md"
               onClick={() => setExpandedReview(expandedReview === review.id ? null : review.id)}
             >
-              <div className="review-header">
-                <div className="review-info">
-                  <div className="product-name">{review.productName}</div>
-                  <div className="category-badge">{review.category}</div>
-                  <div className="author">by {review.author}</div>
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex-1">
+                  <div className="font-semibold text-slate-800 mb-1">{review.productName}</div>
+                  <div className="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-xs rounded-full mb-1">
+                    {review.category}
+                  </div>
+                  <div className="text-xs text-slate-500">by {review.author}</div>
                 </div>
               </div>
 
-              <div className="rating">
+              <div className="flex gap-0.5 mb-2">
                 {[1, 2, 3, 4, 5].map(star => (
                   <StarIcon key={star} filled={star <= review.rating} />
                 ))}
               </div>
 
-              <div className="review-content">
+              <div className="text-gray-700 text-sm leading-relaxed mb-3">
                 {expandedReview === review.id ? review.content : `${review.content.substring(0, 100)}...`}
               </div>
 
@@ -886,26 +333,26 @@ export default function ProductReviewsApp() {
                 <>
                   {/* Media */}
                   {(review.audioUrl || review.imageUrl) && (
-                    <div className="review-media">
+                    <div className="flex gap-2 mb-3">
                       {review.imageUrl && (
                         <img
                           src={review.imageUrl}
                           alt="Product"
-                          className="media-thumbnail"
+                          className="w-15 h-15 rounded-lg object-cover cursor-pointer"
                         />
                       )}
                       {review.audioUrl && (
-                        <div className="audio-player">
+                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                           <button
-                            className="play-button"
+                            className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               playAudio(review.audioUrl!);
                             }}
                           >
-                            <PlayIcon />
+                            <FiPlay className="w-4 h-4 ml-0.5" />
                           </button>
-                          <div className="audio-info">Audio Review</div>
+                          <div className="text-xs text-slate-600">Audio Review</div>
                         </div>
                       )}
                     </div>
@@ -913,30 +360,38 @@ export default function ProductReviewsApp() {
                 </>
               )}
 
-              <div className="review-actions">
-                <div className="vote-buttons">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3">
                   <button
-                    className={`vote-button ${review.userVote === 'helpful' ? 'voted' : ''}`}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                      review.userVote === 'helpful' 
+                        ? 'text-blue-600 bg-blue-50' 
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleVote(review.id, 'helpful');
                     }}
                   >
-                    <ThumbsUpIcon />
+                    <FiThumbsUp className="w-4 h-4" />
                     {review.helpfulVotes}
                   </button>
                   <button
-                    className={`vote-button ${review.userVote === 'unhelpful' ? 'voted' : ''}`}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${
+                      review.userVote === 'unhelpful' 
+                        ? 'text-blue-600 bg-blue-50' 
+                        : 'text-slate-600 hover:bg-slate-50'
+                    }`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleVote(review.id, 'unhelpful');
                     }}
                   >
-                    <ThumbsDownIcon />
+                    <FiThumbsDown className="w-4 h-4" />
                     {review.unhelpfulVotes}
                   </button>
                 </div>
-                <div className="review-date">
+                <div className="text-xs text-gray-400">
                   {review.createdAt.toLocaleDateString()}
                 </div>
               </div>
@@ -945,36 +400,42 @@ export default function ProductReviewsApp() {
         </div>
 
         {/* FAB */}
-        <button className="fab" onClick={() => setShowCreateModal(true)}>
-          <PlusIcon />
+        <button 
+          className="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 hover:scale-110 transition-all flex items-center justify-center z-50"
+          onClick={() => setShowCreateModal(true)}
+        >
+          <FiPlus className="w-6 h-6" />
         </button>
 
         {/* Create Review Modal */}
         {showCreateModal && (
-          <div className="modal-overlay">
-            <div className="modal">
-              <div className="modal-header">
-                <h2 className="modal-title">Write a Review</h2>
-                <button className="close-button" onClick={() => setShowCreateModal(false)}>
-                  <XIcon />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold text-slate-800">Write a Review</h2>
+                <button 
+                  className="text-slate-400 hover:bg-slate-100 p-1 rounded transition-colors"
+                  onClick={() => setShowCreateModal(false)}
+                >
+                  <FiX className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Product Name *</label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Product Name *</label>
                 <input
                   type="text"
-                  className="form-input"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
                   value={newReview.productName}
                   onChange={(e) => setNewReview(prev => ({ ...prev, productName: e.target.value }))}
                   placeholder="Enter product name"
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Category *</label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category *</label>
                 <select
-                  className="form-select"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500"
                   value={newReview.category}
                   onChange={(e) => setNewReview(prev => ({ ...prev, category: e.target.value }))}
                 >
@@ -985,26 +446,30 @@ export default function ProductReviewsApp() {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Rating *</label>
-                <div className="rating-selector">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Rating *</label>
+                <div className="flex gap-1 mb-4">
                   {[1, 2, 3, 4, 5].map(star => (
                     <button
                       key={star}
                       type="button"
-                      className="rating-star"
+                      className="transition-transform hover:scale-110"
                       onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
                     >
-                      <StarIcon filled={star <= newReview.rating} />
+                      <FiStar 
+                        className={`w-6 h-6 ${
+                          star <= newReview.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                        }`}
+                      />
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Review *</label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Review *</label>
                 <textarea
-                  className="form-textarea"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-3 focus:ring-blue-100 focus:border-blue-500 resize-vertical min-h-[80px]"
                   value={newReview.content}
                   onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Share your experience with this product..."
@@ -1012,24 +477,28 @@ export default function ProductReviewsApp() {
               </div>
 
               {/* Media Upload */}
-              <div className="media-upload">
+              <div className="flex gap-2 mb-4">
                 <button
                   type="button"
-                  className={`media-button ${audioRecorder.isRecording ? 'recording' : ''}`}
+                  className={`flex-1 p-3 border-2 border-dashed rounded-lg flex flex-col items-center gap-2 transition-colors ${
+                    audioRecorder.isRecording 
+                      ? 'border-red-300 text-red-600 bg-red-50' 
+                      : 'border-gray-200 text-slate-600 hover:border-blue-300 hover:text-blue-600'
+                  }`}
                   onClick={audioRecorder.isRecording ? stopRecording : startRecording}
                 >
-                  <MicIcon isRecording={audioRecorder.isRecording} />
-                  <div className="media-text">
+                  <FiMic className="w-6 h-6" />
+                  <div className="text-xs text-center">
                     {audioRecorder.isRecording ? 'Stop Recording' : 'Record Audio'}
                   </div>
                 </button>
                 <button
                   type="button"
-                  className="media-button"
+                  className="flex-1 p-3 border-2 border-dashed border-gray-200 text-slate-600 rounded-lg flex flex-col items-center gap-2 transition-colors hover:border-blue-300 hover:text-blue-600"
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  <CameraIcon />
-                  <div className="media-text">Add Photo</div>
+                  <FiCamera className="w-6 h-6" />
+                  <div className="text-xs text-center">Add Photo</div>
                 </button>
               </div>
 
@@ -1038,18 +507,18 @@ export default function ProductReviewsApp() {
                 type="file"
                 accept="image/*"
                 capture="environment"
-                className="hidden-input"
+                className="hidden"
                 onChange={handleImageCapture}
               />
 
               {/* Media Preview */}
               {(recordedAudio || capturedImage) && (
-                <div className="media-preview">
+                <div className="flex gap-2 mb-4 flex-wrap">
                   {capturedImage && (
-                    <div className="preview-item">
-                      <img src={capturedImage} alt="Preview" className="preview-image" />
+                    <div className="relative">
+                      <img src={capturedImage} alt="Preview" className="w-20 h-20 object-cover rounded-lg" />
                       <button
-                        className="remove-media"
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
                         onClick={() => setCapturedImage(null)}
                       >
                         ×
@@ -1057,18 +526,18 @@ export default function ProductReviewsApp() {
                     </div>
                   )}
                   {recordedAudio && (
-                    <div className="preview-item">
-                      <div className="audio-player">
+                    <div className="relative">
+                      <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                         <button
-                          className="play-button"
+                          className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center"
                           onClick={() => playAudio(recordedAudio)}
                         >
-                          <PlayIcon />
+                          <FiPlay className="w-4 h-4 ml-0.5" />
                         </button>
-                        <div className="audio-info">Recorded Audio</div>
+                        <div className="text-xs text-slate-600">Recorded Audio</div>
                       </div>
                       <button
-                        className="remove-media"
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs"
                         onClick={() => setRecordedAudio(null)}
                       >
                         ×
@@ -1078,15 +547,15 @@ export default function ProductReviewsApp() {
                 </div>
               )}
 
-              <div className="button-group">
+              <div className="flex gap-2 mt-5">
                 <button
-                  className="button button-secondary"
+                  className="flex-1 px-4 py-3 bg-slate-100 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors"
                   onClick={() => setShowCreateModal(false)}
                 >
                   Cancel
                 </button>
                 <button
-                  className="button button-primary"
+                  className="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
                   onClick={handleSubmitReview}
                 >
                   Submit Review
