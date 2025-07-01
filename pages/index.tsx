@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
+import { Inter } from 'next/font/google';
 import { 
   FiSearch, 
   FiMic, 
@@ -15,6 +16,12 @@ import {
   FiArrowRight,
   FiCheck
 } from 'react-icons/fi';
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+});
 
 // Types
 interface Review {
@@ -619,12 +626,9 @@ export default function ProductReviewsApp() {
         <meta name="description" content="Mobile-first product reviews app" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="max-w-md mx-auto p-4 min-h-screen bg-gray-50 font-sans" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
+      <div className={`max-w-md mx-auto p-4 min-h-screen bg-gray-50 ${inter.className}`}>
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-slate-800 mb-2">Product Reviews</h1>
